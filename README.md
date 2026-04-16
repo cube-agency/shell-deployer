@@ -157,3 +157,7 @@ The build result is an `app.tgz` file in the local directory, containing all fil
 ### Retrieving DEPLOY_SSH_KNOWN_HOSTS
 Run the following command with the actual host or IP to output the content of known hosts to the console:   
 `ssh-keyscan -p 22 HOST_OR_IP 2>/dev/null`
+
+### Generating a deploy SSH key
+Run the following command to generate a dedicated SSH key pair for deployment:   
+`ssh-keygen -C my-project-production-cd -f my-project-production-cd -N ''`
