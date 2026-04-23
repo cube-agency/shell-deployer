@@ -4,7 +4,8 @@
 gulp*
 readme.md
 webpack*
-package*.json
+package.json
+package-lock.json
 grumphp.yml
 .stylelintrc
 tsconfig.json
