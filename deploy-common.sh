@@ -53,13 +53,26 @@ if [ -n "${DEPLOY_SSH_KNOWN_HOSTS}" ]; then
 fi
 
 # optionally, write ssh key
-if [ -n "${DEPLOY_SSH_PRIVATE_KEY}" ]; then
+if [ -n "${DEPLOY_SSH_PRIVATE_KEY}" ] && [ -n "${DEPLOY_SSH_PRIVATE_KEY_BASE64}" ]; then
+  echo "Error: set only one of DEPLOY_SSH_PRIVATE_KEY or DEPLOY_SSH_PRIVATE_KEY_BASE64" >&2
+  exit 1
+fi
+
+if [ -n "${DEPLOY_SSH_PRIVATE_KEY}" ] || [ -n "${DEPLOY_SSH_PRIVATE_KEY_BASE64}" ]; then
   DEPLOY_SSH_PRIVATE_KEY_PATH=${DEPLOY_SSH_DIR}/id_rsa
 
-  checkExistingFile ${DEPLOY_SSH_PRIVATE_KEY}
+  checkExistingFile ${DEPLOY_SSH_PRIVATE_KEY_PATH}
   ensureSshDirExists
 
-  echo "${DEPLOY_SSH_PRIVATE_KEY}" > ${DEPLOY_SSH_PRIVATE_KEY_PATH}
+  if [ -n "${DEPLOY_SSH_PRIVATE_KEY_BASE64}" ]; then
+    if ! echo "${DEPLOY_SSH_PRIVATE_KEY_BASE64}" | base64 -d > ${DEPLOY_SSH_PRIVATE_KEY_PATH}; then
+      echo "Error: failed to base64-decode DEPLOY_SSH_PRIVATE_KEY_BASE64" >&2
+      exit 1
+    fi
+  else
+    echo "${DEPLOY_SSH_PRIVATE_KEY}" > ${DEPLOY_SSH_PRIVATE_KEY_PATH}
+  fi
+
   chmod 600 ${DEPLOY_SSH_PRIVATE_KEY_PATH}
 fi
 

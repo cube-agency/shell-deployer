@@ -20,7 +20,7 @@ stages:
   tags:
     - deploy
   script:
-    - npx -y -p shell-deployer@1.6.6 deploy-nodejs dist/spa/ --with-build
+    - npx -y -p shell-deployer@1.6.7 deploy-nodejs dist/spa/ --with-build
 
 deploy to staging:
   <<: *deploy
@@ -44,7 +44,7 @@ deploy to staging:
   tags:
     - deploy
   script:
-    - npx --yes -p shell-deployer@1.6.6 deploy-laravel app.tgz --with-build
+    - npx --yes -p shell-deployer@1.6.7 deploy-laravel app.tgz --with-build
 
 deploy to staging:
   <<: *deploy
@@ -69,7 +69,7 @@ deploy to staging:
   tags:
     - deploy
   script:
-    - npx --yes -p shell-deployer@1.6.6 deploy-wordpress app.tgz --with-build
+    - npx --yes -p shell-deployer@1.6.7 deploy-wordpress app.tgz --with-build
 
 deploy to staging:
   <<: *deploy
@@ -98,6 +98,7 @@ deploy to staging:
 
 - **DEPLOY_SSH_KNOWN_HOSTS**: Use this variable to specify custom SSH known hosts when deploying to servers that are not already in your `known_hosts` file, or when there is no existing and/or persistent `known_hosts` file, such as when deploying from a continuous integration (CI) environment. When defined, the script will append the specified known hosts information to the `known_hosts` file located at `$DEPLOY_SSH_PATH/known_hosts`. This ensures secure SSH connections to new servers or under customized deployment conditions.
 - **DEPLOY_SSH_PRIVATE_KEY**: The actual SSH key as a string. This script dynamically creates an SSH key file at `DEPLOY_SSH_PRIVATE_KEY_PATH` and sets the correct permissions (`chmod 600`). This is useful for CI/CD environments where you might not want to store the private key on the filesystem or in the image.
+- **DEPLOY_SSH_PRIVATE_KEY_BASE64**: A base64-encoded SSH private key — use this when you need to store the key as a GitLab CI/CD **masked** variable. GitLab refuses to mask values containing whitespace, so a multi-line PEM key cannot be masked, but its base64-encoded single-line form can. The script decodes it and writes the result to `DEPLOY_SSH_PRIVATE_KEY_PATH` with `chmod 600`. Set either `DEPLOY_SSH_PRIVATE_KEY` or `DEPLOY_SSH_PRIVATE_KEY_BASE64`, not both — the script will exit with an error if both are set.
 - **DEPLOY_SSH_PORT**: The port to use for SSH connections. If not set, the default SSH port `22` is used. This allows flexibility for deployments to servers configured to use non-standard SSH ports.
 - **DEPLOY_SSH_PRIVATE_KEY_PATH**: The path where the deployment script should store the SSH key used for the deployment. If not set, the script defaults to using `$HOME/.ssh/id_rsa`. This is critical if you're using a specific SSH key for deployment that isn't the default key.
 
@@ -134,19 +135,19 @@ The build process will execute `npm i && npm run build` to construct the project
 
 
 #### Node.js
-Use the command `npx -y -p shell-deployer@1.6.6 build-nodejs` to build.
+Use the command `npx -y -p shell-deployer@1.6.7 build-nodejs` to build.
 
 The build result is the directory specified by `npm run build`.
 
 #### Wordpress
-Use the command `npx -y -p shell-deployer@1.6.6 build-wordpress` to build.
+Use the command `npx -y -p shell-deployer@1.6.7 build-wordpress` to build.
 
 In addition to the Node.js `npm run build`, `composer install` will be executed to install all required dependencies, excluding dev packages.
 
 The build result is an `app.tgz` file in the local directory, containing all files and directories from the current directory, except those specified in `.buildignore`.
 
 #### Laravel
-Use the command `npx -y -p shell-deployer@1.6.6 build-laravel` to build.
+Use the command `npx -y -p shell-deployer@1.6.7 build-laravel` to build.
 
 In addition to the Node.js `npm run build`, `composer install` will be executed to install all required dependencies, excluding dev packages.
 
@@ -161,3 +162,6 @@ Run the following command with the actual host or IP to output the content of kn
 ### Generating a deploy SSH key
 Run the following command to generate a dedicated SSH key pair for deployment:   
 `ssh-keygen -C my-project-production-cd -f my-project-production-cd -N ''`
+
+To get a single-line base64 value suitable for a GitLab CI/CD **masked** variable (use as `DEPLOY_SSH_PRIVATE_KEY_BASE64`):   
+`base64 -i my-project-production-cd | tr -d '\n' | pbcopy`
