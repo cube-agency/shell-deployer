@@ -1,6 +1,6 @@
 {
   "name": "shell-deployer",
-  "version": "1.6.7",
+  "version": "2.0.0",
   "description": "Simple bash shell deployer for nodejs and laravel applications",
   "bin": {
     "deploy-nodejs": "./deploy-nodejs.sh",
