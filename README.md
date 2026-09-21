@@ -161,7 +161,7 @@ Run the following command with the actual host or IP to output the content of kn
 
 ### Generating a deploy SSH key
 Run the following command to generate a dedicated SSH key pair for deployment:   
-`ssh-keygen -C my-project-production-cd -f my-project-production-cd -N ''`
+`ssh-keygen -t ed25519 -C my-project-production-cd -f my-project-production-cd -N ''`
 
 To get a single-line base64 value suitable for a GitLab CI/CD **masked** variable (use as `DEPLOY_SSH_PRIVATE_KEY_BASE64`):   
 `base64 -i my-project-production-cd | tr -d '\n' | pbcopy`
