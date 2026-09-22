@@ -20,7 +20,7 @@ stages:
   tags:
     - deploy
   script:
-    - npx -y -p shell-deployer@1.6.7 deploy-nodejs dist/spa/ --with-build
+    - npx -y -p shell-deployer@2.0.0 deploy-nodejs dist/spa/ --with-build
 
 deploy to staging:
   <<: *deploy
@@ -44,7 +44,7 @@ deploy to staging:
   tags:
     - deploy
   script:
-    - npx --yes -p shell-deployer@1.6.7 deploy-laravel app.tgz --with-build
+    - npx --yes -p shell-deployer@2.0.0 deploy-laravel app.tgz --with-build
 
 deploy to staging:
   <<: *deploy
@@ -69,7 +69,7 @@ deploy to staging:
   tags:
     - deploy
   script:
-    - npx --yes -p shell-deployer@1.6.7 deploy-wordpress app.tgz --with-build
+    - npx --yes -p shell-deployer@2.0.0 deploy-wordpress app.tgz --with-build
 
 deploy to staging:
   <<: *deploy
@@ -135,19 +135,19 @@ The build process will execute `npm i && npm run build` to construct the project
 
 
 #### Node.js
-Use the command `npx -y -p shell-deployer@1.6.7 build-nodejs` to build.
+Use the command `npx -y -p shell-deployer@2.0.0 build-nodejs` to build.
 
 The build result is the directory specified by `npm run build`.
 
 #### Wordpress
-Use the command `npx -y -p shell-deployer@1.6.7 build-wordpress` to build.
+Use the command `npx -y -p shell-deployer@2.0.0 build-wordpress` to build.
 
 In addition to the Node.js `npm run build`, `composer install` will be executed to install all required dependencies, excluding dev packages.
 
 The build result is an `app.tgz` file in the local directory, containing all files and directories from the current directory, except those specified in `.buildignore`.
 
 #### Laravel
-Use the command `npx -y -p shell-deployer@1.6.7 build-laravel` to build.
+Use the command `npx -y -p shell-deployer@2.0.0 build-laravel` to build.
 
 In addition to the Node.js `npm run build`, `composer install` will be executed to install all required dependencies, excluding dev packages.
 
