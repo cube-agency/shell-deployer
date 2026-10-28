@@ -13,7 +13,10 @@ source ${DEPLOYER_DIR}/deploy-common.sh
 DEPLOY_PHP_COMMAND="${DEPLOY_PHP_COMMAND:-php}"
 DEPLOY_SHARED_FILES="${DEPLOY_SHARED_FILES:-.env}"
 DEPLOY_SHARED_DIRECTORIES="${DEPLOY_SHARED_DIRECTORIES:-storage}"
-DEPLOY_SHARED_STORAGE_DIRECTORIES="${DEPLOY_SHARED_STORAGE_DIRECTORIES:-app/public;framework/cache/data;framework/views;framework/sessions;logs}"
+# empty is a valid value: no storage directories
+DEPLOY_SHARED_STORAGE_DIRECTORIES="${DEPLOY_SHARED_STORAGE_DIRECTORIES-app/public;framework/cache/data;framework/views;framework/sessions;logs}"
+# empty is a valid value: no required paths
+DEPLOY_SHARED_REQUIRED_PATHS="${DEPLOY_SHARED_REQUIRED_PATHS-.env}"
 DEPLOY_ARTISAN_COMMANDS="${DEPLOY_ARTISAN_COMMANDS:-storage:link;config:cache;migrate --force;view:cache;queue:restart}"
 DEPLOY_SOURCE_NAME=`basename ${DEPLOY_SOURCE_PATH}`
 
@@ -31,6 +34,18 @@ ssh ${SSH_ARGS} ${DEPLOY_USER}@${DEPLOY_HOST} /bin/bash << EOT
   # use ; as delimiter for list params
   export IFS=";"
 
+  # do not go further as required shared paths are not created yet
+  export LOCAL_DEPLOY_SHARED_REQUIRED_PATHS="${DEPLOY_SHARED_REQUIRED_PATHS}"
+  # split on semicolons without expanding glob characters in path names
+  set -f
+  for shared_required_path in \${LOCAL_DEPLOY_SHARED_REQUIRED_PATHS}; do
+    if [ ! -e "${DEPLOY_PATH}/shared/\${shared_required_path}" ]; then
+      echo "${DEPLOY_PATH}/shared/\${shared_required_path} does not exists"
+      exit 1
+    fi
+  done
+  set +f
+
   mkdir -p ${RELEASE_DIR}
 
   # create shared storage directories
@@ -38,13 +53,6 @@ ssh ${SSH_ARGS} ${DEPLOY_USER}@${DEPLOY_HOST} /bin/bash << EOT
   for shared_storage_directory in \${LOCAL_DEPLOY_SHARED_STORAGE_DIRECTORIES}; do
     mkdir -p ${DEPLOY_PATH}/shared/storage/\${shared_storage_directory}
   done
-
-  # do not go further as .env is not created yet
-  export LOCAL_ENV_PATH="${DEPLOY_PATH}/shared/.env"
-  if [ ! -f "\${LOCAL_ENV_PATH}" ]; then
-    echo "${DEPLOY_PATH}/shared/.env does not exists"
-    exit 1
-  fi
 EOT
 
 # call upload method by specifying upload target

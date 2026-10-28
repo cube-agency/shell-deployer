@@ -106,7 +106,8 @@ deploy to staging:
 - **DEPLOY_PHP_COMMAND**: PHP binary name on remote server. Either name (ex. `php8.3`) or full path (ex `/usr/bin/php8.3`) can be specified. If not set, the default name of `php` is used.
 - **DEPLOY_SHARED_FILES**: List of `;` separated files in `DEPLOY_PATH/shared` directory to be symlinked against deployed release. If not set, the default value of `.env` is used.
 - **DEPLOY_SHARED_DIRECTORIES**: List of `;` separated directories in `DEPLOY_PATH/shared` directory to be symlinked against deployed release. If not set, the default value of `storage` is used.
-- **DEPLOY_SHARED_STORAGE_DIRECTORIES**: List of `;` separated directories in `DEPLOY_PATH/shared/storage` directory to be created. If not set, the default value of `app/public;framework/cache/data;framework/views;framework/sessions;logs` is used.
+- **DEPLOY_SHARED_STORAGE_DIRECTORIES**: List of `;` separated directories in `DEPLOY_PATH/shared/storage` directory to be created. An empty value creates no directories. If not set, the default value of `app/public;framework/cache/data;framework/views;framework/sessions;logs` is used.
+- **DEPLOY_SHARED_REQUIRED_PATHS**: List of `;` separated files, directories or symlinks in `DEPLOY_PATH/shared` directory that must exist before anything is uploaded. An empty value requires no paths. If not set, the default value of `.env` is used.
 - **DEPLOY_ARTISAN_COMMANDS**: List of `;` separated artisan commands to be called to complete deployment process. If not set, the default value of `storage:link;config:cache;migrate --force;view:cache;queue:restart` is used. If `DEPLOY_CUSTOM_COMMANDS` is set, no `DEPLOY_ARTISAN_COMMANDS` are executed.
 - **DEPLOY_CUSTOM_COMMANDS**: List of `;` separated commands to be called to complete deployment process. If not set, no commands are executed.
 
@@ -119,7 +120,7 @@ If you need a customized list of files and directories to ignore, create a file 
 
 #### .env configuration
 
-The deployment process assumes that `DEPLOY_PATH/shared/.env` exists. If it does not, an error will be thrown.
+The deployment process assumes that `DEPLOY_PATH/shared/.env` exists. If it does not, an error will be thrown. `DEPLOY_SHARED_REQUIRED_PATHS` changes which shared paths are checked.
 
 ### Script Parameters
 

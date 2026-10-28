@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+
+- **`DEPLOY_SHARED_REQUIRED_PATHS`** for Laravel deploys: a `;` separated list of
+  files, directories or symlinks in `DEPLOY_PATH/shared` that must exist, replacing
+  the hard-coded `.env` check. The default, `.env`, keeps the existing behavior. An
+  empty value requires nothing.
+
+### Changed
+
+- The required-paths check runs before the release directory is created, so a
+  deploy that stops there no longer leaves an empty `releases/<timestamp>` behind.
+- An empty `DEPLOY_SHARED_STORAGE_DIRECTORIES` creates no storage directories
+  instead of falling back to the Laravel defaults. Unset still uses the defaults.
+
 ## 2.0.0
 
 ### Breaking
