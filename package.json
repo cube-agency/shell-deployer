@@ -1,7 +1,12 @@
 {
   "name": "shell-deployer",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Simple bash shell deployer for nodejs and laravel applications",
+  "files": [
+    "*.sh",
+    ".buildignore",
+    "CHANGELOG.md"
+  ],
   "bin": {
     "deploy-nodejs": "./deploy-nodejs.sh",
     "deploy-laravel": "./deploy-laravel.sh",

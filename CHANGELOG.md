@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.1
+
+### Fixed
+
+- Limit published package files to the shell scripts, `.buildignore` and
+  documentation, excluding local editor and agent settings.
+
 ## 2.1.0
 
 ### Added
