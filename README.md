@@ -1,12 +1,12 @@
 # Shell Deployer
 
-Shell Deployer is a simple bash shell based deployment tool designed to streamline the deployment process of Laravel, Wordpress and Node.js projects via GitLab CI/CD pipelines. It simplifies the deployment steps, making it easy to deploy projects to various environments with minimal configuration.
+Bash deployment scripts for PHP, Laravel, WordPress and Node.js projects, made for GitLab CI/CD pipelines. Each deploy uploads a release to `DEPLOY_PATH/releases/<timestamp>` on the server and switches the `DEPLOY_PATH/current` symlink to it.
 
 ## Getting Started
 
-To use deployer in your project, add npx deployment script call in your `.gitlab-ci.yml` file with the necessary configurations. Below are examples for both Laravel, Wordpress and Node.js projects.
+Call the deploy script with `npx` from `.gitlab-ci.yml`.
 
-### Node.js GitLab CI Example
+### Node.js
 
 ```yaml
 stages:
@@ -20,7 +20,7 @@ stages:
   tags:
     - deploy
   script:
-    - npx -y -p shell-deployer@2.0.0 deploy-nodejs dist/spa/ --with-build
+    - npx -y -p shell-deployer@3.0.0 deploy-nodejs dist/spa/ --with-build
 
 deploy to staging:
   <<: *deploy
@@ -35,7 +35,8 @@ deploy to staging:
     DEPLOY_SSH_PRIVATE_KEY: $STAGING_DEPLOY_PRIVATE_KEY
 ```
 
-### Laravel GitLab CI Example
+### Laravel
+
 ```yaml
 .deploy: &deploy
   stage: deploy
@@ -44,7 +45,7 @@ deploy to staging:
   tags:
     - deploy
   script:
-    - npx --yes -p shell-deployer@2.0.0 deploy-laravel app.tgz --with-build
+    - npx -y -p shell-deployer@3.0.0 deploy-laravel app.tgz --with-build
 
 deploy to staging:
   <<: *deploy
@@ -60,7 +61,8 @@ deploy to staging:
     DEPLOY_SSH_PRIVATE_KEY: $STAGING_DEPLOY_PRIVATE_KEY
 ```
 
-### Wordpress GitLab CI Example
+### WordPress
+
 ```yaml
 .deploy: &deploy
   stage: deploy
@@ -69,7 +71,7 @@ deploy to staging:
   tags:
     - deploy
   script:
-    - npx --yes -p shell-deployer@2.0.0 deploy-wordpress app.tgz --with-build
+    - npx -y -p shell-deployer@3.0.0 deploy-wordpress app.tgz --with-build
 
 deploy to staging:
   <<: *deploy
@@ -84,85 +86,70 @@ deploy to staging:
     DEPLOY_SSH_PRIVATE_KEY: $STAGING_DEPLOY_PRIVATE_KEY
 ```
 
-## Configuration
+A generic PHP project builds its own `app.tgz` and deploys it with `deploy-php app.tgz`, using the same variables as the Laravel example minus the Laravel ones. PHP has no build convention, so `--with-build` exists for Laravel, WordPress and Node.js only.
 
-### Environment Variables
+## Scripts
 
-#### Required Environment Variables
+| Script | What it does |
+|---|---|
+| `deploy-php` | Uploads an archive built by the project, extracts it into a new release, symlinks shared paths, runs `DEPLOY_COMMANDS`, switches `current`, runs `DEPLOY_FINALIZE_COMMANDS`. No shared paths unless configured. |
+| `deploy-laravel` | `deploy-php` with Laravel shared-path defaults and `DEPLOY_ARTISAN_COMMANDS` run ahead of `DEPLOY_COMMANDS`. |
+| `deploy-wordpress` | `deploy-php` with WordPress shared-path defaults. |
+| `deploy-nodejs` | Uploads a built directory as a new release, runs `DEPLOY_COMMANDS`, switches `current`, runs `DEPLOY_FINALIZE_COMMANDS`. |
+| `build-laravel`, `build-wordpress` | `composer install`, `npm i && npm run build`, then pack the project into `app.tgz`, excluding the paths listed in [.buildignore](https://github.com/cube-agency/shell-deployer/blob/master/.buildignore). A `.buildignore` in the project root takes precedence. |
+| `build-nodejs` | `npm i && npm run build`. |
 
-- **DEPLOY_HOST**: The hostname or IP address of the server where the project will be deployed.
-- **DEPLOY_USER**: The username used to log into the server.
-- **DEPLOY_PATH**: The path on the server where the project should be deployed. This script uses this path to create a `releases` directory where each release will be stored in a timestamped subdirectory. Latest release will be symlinked to `current` directory.
+Arguments: the source path (an archive for PHP, a directory for Node.js) and the optional `--with-build` flag, which runs the matching build script first (Laravel, WordPress and Node.js).
 
-#### Optional Environment Variables
+## Environment Variables
 
-- **DEPLOY_SSH_KNOWN_HOSTS**: Use this variable to specify custom SSH known hosts when deploying to servers that are not already in your `known_hosts` file, or when there is no existing and/or persistent `known_hosts` file, such as when deploying from a continuous integration (CI) environment. When defined, the script will append the specified known hosts information to the `known_hosts` file located at `$DEPLOY_SSH_PATH/known_hosts`. This ensures secure SSH connections to new servers or under customized deployment conditions.
-- **DEPLOY_SSH_PRIVATE_KEY**: The actual SSH key as a string. This script dynamically creates an SSH key file at `DEPLOY_SSH_PRIVATE_KEY_PATH` and sets the correct permissions (`chmod 600`). This is useful for CI/CD environments where you might not want to store the private key on the filesystem or in the image.
-- **DEPLOY_SSH_PRIVATE_KEY_BASE64**: A base64-encoded SSH private key — use this when you need to store the key as a GitLab CI/CD **masked** variable. GitLab refuses to mask values containing whitespace, so a multi-line PEM key cannot be masked, but its base64-encoded single-line form can. The script decodes it and writes the result to `DEPLOY_SSH_PRIVATE_KEY_PATH` with `chmod 600`. Set either `DEPLOY_SSH_PRIVATE_KEY` or `DEPLOY_SSH_PRIVATE_KEY_BASE64`, not both — the script will exit with an error if both are set.
-- **DEPLOY_SSH_PORT**: The port to use for SSH connections. If not set, the default SSH port `22` is used. This allows flexibility for deployments to servers configured to use non-standard SSH ports.
-- **DEPLOY_SSH_PRIVATE_KEY_PATH**: The path where the deployment script should store the SSH key used for the deployment. If not set, the script defaults to using `$HOME/.ssh/id_rsa`. This is critical if you're using a specific SSH key for deployment that isn't the default key.
+### Required
 
-#### Optional Laravel Environment Variables
-- **DEPLOY_PHP_COMMAND**: PHP binary name on remote server. Either name (ex. `php8.3`) or full path (ex `/usr/bin/php8.3`) can be specified. If not set, the default name of `php` is used.
-- **DEPLOY_SHARED_FILES**: List of `;` separated files in `DEPLOY_PATH/shared` directory to be symlinked against deployed release. If not set, the default value of `.env` is used.
-- **DEPLOY_SHARED_DIRECTORIES**: List of `;` separated directories in `DEPLOY_PATH/shared` directory to be symlinked against deployed release. If not set, the default value of `storage` is used.
-- **DEPLOY_SHARED_STORAGE_DIRECTORIES**: List of `;` separated directories in `DEPLOY_PATH/shared/storage` directory to be created. An empty value creates no directories. If not set, the default value of `app/public;framework/cache/data;framework/views;framework/sessions;logs` is used.
-- **DEPLOY_SHARED_REQUIRED_PATHS**: List of `;` separated files, directories or symlinks in `DEPLOY_PATH/shared` directory that must exist before anything is uploaded. An empty value requires no paths. If not set, the default value of `.env` is used.
-- **DEPLOY_ARTISAN_COMMANDS**: List of `;` separated artisan commands to be called to complete deployment process. If not set, the default value of `storage:link;config:cache;migrate --force;view:cache;queue:restart` is used. If `DEPLOY_CUSTOM_COMMANDS` is set, no `DEPLOY_ARTISAN_COMMANDS` are executed.
-- **DEPLOY_CUSTOM_COMMANDS**: List of `;` separated commands to be called to complete deployment process. If not set, no commands are executed.
+- **DEPLOY_HOST**: server hostname or IP.
+- **DEPLOY_USER**: SSH user.
+- **DEPLOY_PATH**: deployment root on the server, holding `releases/`, `shared/` and `current`.
 
-### Laravel configuration
+### Optional
 
-#### Deployment archive building
+- **DEPLOY_SSH_KNOWN_HOSTS**: known hosts entries appended to `$HOME/.ssh/known_hosts`, for CI runners without a persistent one.
+- **DEPLOY_SSH_PRIVATE_KEY**: private key content, written to `DEPLOY_SSH_PRIVATE_KEY_PATH` with mode `600`.
+- **DEPLOY_SSH_PRIVATE_KEY_BASE64**: the same key base64-encoded on a single line, so that it can be a GitLab **masked** variable. Set one of the two, not both.
+- **DEPLOY_SSH_PRIVATE_KEY_PATH**: path of the key file. A provided key is written there (default `$HOME/.ssh/id_rsa`); set it without a provided key to use an existing key file.
+- **DEPLOY_SSH_PORT**: SSH port. Default `22`.
+- **DEPLOY_KEEP_RELEASES**: releases kept in `DEPLOY_PATH/releases`, the new one included. Default `2`.
+- **DEPLOY_COMMANDS**: `;` separated commands run in the release directory before it becomes `current`.
+- **DEPLOY_FINALIZE_COMMANDS**: `;` separated commands run in `DEPLOY_PATH/current` after the switch, for example `sudo systemctl reload php8.3-fpm`.
 
-When building a Laravel deployment archive, the list of files and directories to exclude from the build package is specified in .buildignore, which can be found here: https://github.com/cube-agency/shell-deployer/blob/master/.buildignore.    
-If you need a customized list of files and directories to ignore, create a file named .buildignore at the root of your project.
+Commands run on the server with `bash -c`, so quoting, `$VARIABLES` and `$(subshells)` are evaluated there. A failing command stops the deployment.
 
-#### .env configuration
+### PHP shared paths
 
-The deployment process assumes that `DEPLOY_PATH/shared/.env` exists. If it does not, an error will be thrown. `DEPLOY_SHARED_REQUIRED_PATHS` changes which shared paths are checked.
+`;` separated paths relative to both `DEPLOY_PATH/shared` and the release, without `..` or trailing slashes. Whatever the archive contains at a shared path is replaced by the symlink, so a symlinked path may not lie inside another one. An empty value disables the option; the defaults apply when the variable is unset. `deploy-php` has no defaults.
 
-### Script Parameters
+| Variable | Effect | `deploy-laravel` default | `deploy-wordpress` default |
+|---|---|---|---|
+| `DEPLOY_SHARED_FILES` | symlinked into the release | `.env` | `.env` |
+| `DEPLOY_SHARED_DIRECTORIES` | created in `shared`, symlinked into the release | `storage` | `wp-content/uploads;wp-content/languages` |
+| `DEPLOY_SHARED_CREATE_DIRECTORIES` | created in `shared` | `storage/app/public;storage/framework/cache/data;storage/framework/views;storage/framework/sessions;storage/logs` | |
+| `DEPLOY_SHARED_REQUIRED_PATHS` | must exist in `shared` before anything is uploaded | `.env` | `.env` |
 
-- **DEPLOYMENT_SOURCE_PATH**: This is a required positional argument that specifies the source directory or file of the deployment. It must be passed when invoking the script.
-- **--with-build**: This optional flag can be added as the last argument to the script to indicate that a build process should occur as part of the deployment. If not passed, see [build process](#build-process) for manual build process.
+### Laravel
 
-## Build process
-The build process can also be executed by the deployer script.
+- **DEPLOY_PHP_COMMAND**: PHP binary name or path on the server. Default `php`.
+- **DEPLOY_ARTISAN_COMMANDS**: `;` separated artisan commands, each run as `DEPLOY_PHP_COMMAND artisan <command>` ahead of `DEPLOY_COMMANDS`. Default `storage:link;config:cache;migrate --force;view:cache;queue:restart`; an empty value runs none.
 
-Before initiating the deploy process, you can invoke a dedicated build script.
+### Laravel and WordPress build
 
-The build process will execute `npm i && npm run build` to construct the project as specified in package.json for both Node.js and Laravel builds.
-
-
-#### Node.js
-Use the command `npx -y -p shell-deployer@2.0.0 build-nodejs` to build.
-
-The build result is the directory specified by `npm run build`.
-
-#### Wordpress
-Use the command `npx -y -p shell-deployer@2.0.0 build-wordpress` to build.
-
-In addition to the Node.js `npm run build`, `composer install` will be executed to install all required dependencies, excluding dev packages.
-
-The build result is an `app.tgz` file in the local directory, containing all files and directories from the current directory, except those specified in `.buildignore`.
-
-#### Laravel
-Use the command `npx -y -p shell-deployer@2.0.0 build-laravel` to build.
-
-In addition to the Node.js `npm run build`, `composer install` will be executed to install all required dependencies, excluding dev packages.
-
-The build result is an `app.tgz` file in the local directory, containing all files and directories from the current directory, except those specified in `.buildignore`.
+- **DEPLOY_REVISION**: written into the archive as `public/REVISION` (Laravel) or `REVISION` (WordPress). Default `dev`.
+- **DEPLOY_ARCHIVE_MODE**: `tar --mode` spec applied to the archive so that deployed code is not group or world writable. Default `go-w` (`0644`/`0755`); `g-w,o-rwx` gives `0640`/`0750`; an empty value disables it.
 
 ## Miscellaneous
 
-### Retrieving DEPLOY_SSH_KNOWN_HOSTS
-Run the following command with the actual host or IP to output the content of known hosts to the console:   
+Known hosts value for `DEPLOY_SSH_KNOWN_HOSTS`:
 `ssh-keyscan -p 22 HOST_OR_IP 2>/dev/null`
 
-### Generating a deploy SSH key
-Run the following command to generate a dedicated SSH key pair for deployment:   
+Dedicated deploy key pair:
 `ssh-keygen -t ed25519 -C my-project-production-cd -f my-project-production-cd -N ''`
 
-To get a single-line base64 value suitable for a GitLab CI/CD **masked** variable (use as `DEPLOY_SSH_PRIVATE_KEY_BASE64`):   
+Single-line value for `DEPLOY_SSH_PRIVATE_KEY_BASE64`:
 `base64 -i my-project-production-cd | tr -d '\n' | pbcopy`
